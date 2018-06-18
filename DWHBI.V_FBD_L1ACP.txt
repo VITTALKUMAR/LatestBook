@@ -1,0 +1,122 @@
+CREATE VIEW [DWHBI].[V_FBD_L1ACP] AS (
+--WITH SCHEMABINDING AS (
+	SELECT
+		piv.org_id AS [org_id],
+		--piv.case_id,
+		CONCAT(dim_bnf.LastName, ', ', dim_bnf.FirstName) AS [Beneficiary Name],
+		ISNULL(dim_bnf.BNFEmployeeID, '') AS [BNF Employee ID],
+		ISNULL(dim_pet.PetitionerName, '') AS [Corporation Name],
+		ISNULL(dim_hq.HeadQuarterName,'(Blank)') AS [Headquarter Name],
+		ISNULL(case_proc.CaseStatusDescription, '') AS [Case Status],
+		ISNULL(CASE WHEN CONVERT(DATE, case_proc.CaseInitiatedDate) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), case_proc.CaseInitiatedDate, 110)END, '') AS [Case Opened Date],
+		ISNULL(piv.pet_name, '') AS [Petition Name],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124269477801) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124269477801, 110) END, '') AS [Receive Managers' Questionnaire],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124277212202) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124277212202, 110) END, '') AS [Sent L-1 Questionnaire Email],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124297495203) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124297495203, 110) END, '') AS [Receive Initial Docs/Info from FN],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg172812423767404) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg172812423767404, 110) END, '') AS [Request Additional Info from FN],
+		--[Request Additional Info from Manager],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg172812426881705) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg172812426881705, 110) END, '') AS [Receive Additional Info from FN],
+		--[Receive Additional Info from Manager],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg172812429992006) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg172812429992006, 110) END, '') AS [Receive All Documents - SLA starts],
+		(SELECT ISNULL (
+		   ((DATEDIFF(dd, case_proc.CaseInitiatedDate, 
+		   (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006')) + 1)
+		  -(DATEDIFF(wk, case_proc.CaseInitiatedDate, 
+		  (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006')) * 2)
+		  -(CASE WHEN DATENAME(dw, case_proc.CaseInitiatedDate) = 'Sunday' THEN 1 ELSE 0 END)
+		  -(CASE WHEN DATENAME(dw, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006')) = 'Saturday' THEN 1 ELSE 0 END))
+		, '')) AS [Number of Days],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124220843708) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124220843708, 110) END, '') AS [Send Petition for Review],
+		(SELECT ISNULL (
+		   ((DATEDIFF(dd, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006'), 
+		   (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124220843708')) + 1)
+		  -(DATEDIFF(wk, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006'), 
+		  (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124220843708')) * 2)
+		  -(CASE WHEN DATENAME(dw, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg172812429992006')) = 'Sunday' THEN 1 ELSE 0 END)
+		  -(CASE WHEN DATENAME(dw, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124220843708')) = 'Saturday' THEN 1 ELSE 0 END))
+		, '')) AS [SLA Days],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124239661703) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124239661703, 110) END, '') AS [Submit Forms and Documentation for Signature],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg1728124244219904) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg1728124244219904, 110) END, '') AS [File Application/Petition with USCIS],
+		(SELECT ISNULL (
+		   ((DATEDIFF(dd, case_proc.CaseInitiatedDate, 
+		   (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124244219904')) + 1)
+		  -(DATEDIFF(wk, case_proc.CaseInitiatedDate, 
+		  (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124244219904')) * 2)
+		  -(CASE WHEN DATENAME(dw, case_proc.CaseInitiatedDate) = 'Sunday' THEN 1 ELSE 0 END)
+		  -(CASE WHEN DATENAME(dw, (SELECT TOP 1 step_act_date FROM [Global].dbo.tbl_case_step WHERE org_id = piv.org_id and case_id = piv.case_id and Pet_step_key = 'Oefaeg1728124244219904')) = 'Saturday' THEN 1 ELSE 0 END))
+		, '')) AS [Total Case Life Cycle Days],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg169221647218490) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg169221647218490, 110) END, '') AS [RFE Received],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg16922176671372) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg16922176671372, 110) END, '') AS [Submit RFE Response],
+		ISNULL(CASE WHEN CONVERT(DATE, Oefaeg171281932340127) = '1900-01-01' THEN '' ELSE CONVERT(VARCHAR(25), Oefaeg171281932340127, 110) END, '') AS [RFE Response Due],
+		(CASE piv.tmpl_process_type
+			WHEN 'P'
+				THEN 'Premium Processing'
+			WHEN 'R'
+				THEN 'Regular Processing'
+			ELSE ''
+		END) AS [Process Type],
+		ISNULL(case_proc.CaseNotes, '') AS [Case Notes],
+		(SELECT TOP 1 custom_value FROM [Global].dbo.tbl_clnt_custom WHERE org_id = piv.org_id AND bnf_id = piv.bnf_id AND custom_id = 'Aefaeg02161122631844839') AS [Specialized Knowledge Technology],
+		(SELECT TOP 1 custom_value FROM [Global].dbo.tbl_clnt_custom WHERE org_id = piv.org_id AND bnf_id = piv.bnf_id AND custom_id = 'Oefbd20161197') AS [Management Info Department],
+		ISNULL(case_proc.PrimaryCaseManagerNames, '') AS [Primary Case Managers],
+		ISNULL(case_mgr.CaseManagers, '') AS [Case Manager Receive Reminders],
+		(SELECT 'Consular Processing') AS [Process Reference],
+		(CASE dim_bnf.IsBNFActive
+			WHEN 1
+				THEN 'YES'
+			WHEN 0
+				THEN 'NO'
+			ELSE ''
+		END) AS [Is BNF Active?],
+		(CASE piv.tmpl_process_type
+			WHEN 'P'
+				THEN 'YES'
+			WHEN 'R'
+				THEN 'NO'
+			ELSE ''
+		END) AS [Premium Processing]
+	FROM (
+		SELECT 
+			tcase.org_id,
+			tcase.epr_id,
+			tcase.bnf_id,
+			tcase.case_id,
+			org_pet.pet_id,
+			org_pet.pet_name,
+			case_stps.kb_pet_step_key,
+			case_stps.step_act_date,
+			tcase.tmpl_process_type
+		FROM [Global].dbo.tbl_case_step case_stps
+		INNER JOIN [Global].dbo.tbl_case tcase 
+		ON tcase.org_id = case_stps.org_id AND tcase.case_id = case_stps.case_id
+		INNER JOIN [Global].dbo.tbl_org_pet org_pet 
+		ON org_pet.org_id = case_stps.org_id AND org_pet.pet_id = tcase.pet_id
+		where case_stps.org_id = 'Oefaeg' AND org_pet.pet_id = 'Oefaeg20161128117' 
+		AND (tcase.case_delete_date IS NULL OR tcase.case_delete_date = '')
+	) a
+
+	PIVOT (
+		MAX(a.step_act_date) FOR a.kb_pet_step_key IN (
+			Oefaeg1728124269477801,
+			Oefaeg1728124277212202,
+			Oefaeg1728124297495203,
+			Oefaeg172812423767404,
+			Oefaeg172812426881705,
+			Oefaeg172812429992006,
+			Oefaeg1728124220843708,
+			Oefaeg1728124239661703,
+			Oefaeg1728124244219904,
+			Oefaeg169221647218490,
+			Oefaeg16922176671372,
+			Oefaeg171281932340127
+		)
+	) piv
+	INNER JOIN DWHBI.Tbl_D_Organization dim_org WITH (NOLOCK) ON dim_org.SrcOrgID = piv.org_id
+	INNER JOIN DWHBI.Tbl_D_Petitioner dim_pet WITH (NOLOCK) ON dim_pet.OrganizationID = piv.org_id AND dim_pet.SrcPetitionerID = piv.epr_id
+	LEFT  JOIN DWHBI.Tbl_D_HeadQuarter dim_hq WITH (NOLOCK) ON dim_hq.SrcOrgID = piv.org_id AND dim_hq.SrcEprID = piv.epr_id
+	INNER JOIN DWHBI.Tbl_D_Beneficiary dim_bnf WITH (NOLOCK) ON dim_bnf.SrcOrgID = piv.org_id and dim_bnf.SrcBnfID = piv.bnf_id
+	INNER JOIN DWHBI.Tbl_F_CaseProcess case_proc WITH (NOLOCK) ON case_proc.OrganizationKey = dim_org.OrganizationKey and case_proc.SrcCaseID = piv.case_id
+	INNER JOIN DWHBI.Tbl_F_CaseManager case_mgr WITH (NOLOCK) ON case_mgr.SrcOrgID = piv.org_id and case_mgr.SrcCaseID = piv.case_id
+)
+
+
